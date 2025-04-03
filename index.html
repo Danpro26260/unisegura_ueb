@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniSegura - Inicio de Sesión</title>
+    <style>
+        :root {
+            --verde-bosque: #2E8B57;
+            --verde-claro: #3CB371;
+            --blanco: #FFFFFF;
+            --gris-oscuro: #36454F;
+            --gris-claro: #F5F5F5;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: var(--gris-claro);
+            color: #333;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url('https://www.unbosque.edu.co/sites/default/files/2021-04/UniBosque-Campus.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .login-overlay {
+            background: rgba(255, 255, 255, 0.9);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 0;
+        }
+        
+        .login-container {
+            background: var(--blanco);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 400px;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            border: 1px solid rgba(46, 139, 87, 0.2);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--verde-bosque);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--blanco);
+            font-weight: bold;
+        }
+        
+        h1 {
+            color: var(--verde-bosque);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--gris-oscuro);
+            font-size: 0.9rem;
+        }
+        
+        input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+        
+        input:focus {
+            border-color: var(--verde-bosque);
+            outline: none;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--verde-bosque);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            margin-top: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .login-btn:hover {
+            background: var(--verde-claro);
+        }
+        
+        .forgot-password {
+            display: block;
+            margin-top: 1rem;
+            color: var(--verde-bosque);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+        
+        .forgot-password:hover {
+            color: var(--verde-claro);
+        }
+        
+        .footer-text {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: #777;
+        }
+        
+        .error-message {
+            color: #ff4444;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        
+        .university-badge {
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: var(--gris-oscuro);
+        }
+        
+        .university-badge img {
+            height: 20px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="login-overlay"></div>
+    
+    <div class="login-container">
+        <div class="logo">
+            <div class="logo-icon">UEB</div>
+            <h1>UniSegura</h1>
+        </div>
+        
+        <p>Seguridad integral para la comunidad de la Universidad El Bosque</p>
+        
+        <form id="loginForm" style="margin-top: 2rem;">
+            <div class="form-group">
+                <label for="username">Usuario</label>
+                <input type="text" id="username" placeholder="Correo institucional" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" placeholder="Ingresa tu contraseña" required>
+                <div id="errorMessage" class="error-message">Usuario o contraseña incorrectos</div>
+            </div>
+            
+            <button type="submit" class="login-btn">Iniciar Sesión</button>
+            <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+        </form>
+        
+        <div class="university-badge">
+            <img src="https://www.unbosque.edu.co/sites/all/themes/elbosque/logo.png" alt="Logo Universidad El Bosque">
+            <span>Universidad El Bosque</span>
+        </div>
+        
+        <div class="footer-text">
+            © 2023 Universidad El Bosque - Todos los derechos reservados
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Credenciales válidas para demostración
+            const validCredentials = [
+                { user: "estudiante@unbosque.edu.co", pass: "Estudiante123" },
+                { user: "docente@unbosque.edu.co", pass: "Docente123" },
+                { user: "admin@unbosque.edu.co", pass: "Admin123" },
+                { user: "seguridad@unbosque.edu.co", pass: "Seguridad123" }
+            ];
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Verificar credenciales
+            const isValid = validCredentials.some(cred => {
+                const userMatch = username === cred.user || 
+                                 (username + "@unbosque.edu.co") === cred.user;
+                return userMatch && password === cred.pass;
+            });
+            
+            if (isValid) {
+                // Redirigir a la aplicación principal
+                window.location.href = "app.html";
+            } else {
+                // Mostrar error
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('password').value = '';
+            }
+        });
+        
+        // Auto-completar dominio institucional
+        document.getElementById('username').addEventListener('blur', function() {
+            const username = this.value.trim();
+            if (username && !username.includes('@')) {
+                this.value = username + '@unbosque.edu.co';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -13,6 +13,7 @@
             --rojo-emergencia: #FF0000;
             --gris-oscuro: #36454F;
             --gris-claro: #F5F5F5;
+            --naranja-auxilio: #FF6B6B;
         }
         
         * {
@@ -333,6 +334,47 @@
             font-size: 1.2rem;
             cursor: pointer;
         }
+        
+        /* Nuevos estilos para funciones adicionales */
+        .acompanamiento-btn {
+            background: var(--verde-bosque);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 0.5rem 0;
+            width: 100%;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .acompanamiento-btn:hover {
+            background: var(--verde-claro);
+        }
+        
+        .first-aid-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .first-aid-btn {
+            background: var(--naranja-auxilio);
+            color: white;
+            border: none;
+            padding: 0.6rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        
+        .location-status {
+            font-size: 0.9rem;
+            color: var(--gris-oscuro);
+            margin-top: 0.5rem;
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
@@ -352,18 +394,24 @@
         <!-- Página de Inicio -->
         <div id="homePage" class="page active">
             <div class="card">
-                <div class="card-title">Sistema de Seguridad Activo</div>
-                <p>Conectado a la red de la Universidad El Bosque</p>
+                <div class="card-title">Tu ubicación en tiempo real</div>
+                <div id="locationStatus" class="location-status">Obteniendo ubicación...</div>
             </div>
             
             <div class="map-container">
                 <div id="campusMap"></div>
-                <div class="map-overlay">📍 Campus Principal - Universidad El Bosque</div>
+                <div class="map-overlay">📍 Siguiendo tu ubicación</div>
             </div>
             
             <div class="card">
                 <div class="card-title">Acciones rápidas</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <button class="acompanamiento-btn" onclick="solicitarAcompanamiento()">
+                    🚶‍♂️ Solicitar acompañamiento seguro
+                </button>
+                <button onclick="showPage('firstAidPage')" class="acompanamiento-btn" style="background: var(--naranja-auxilio);">
+                    🚑 Primeros Auxilios con IA
+                </button>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
                     <button style="padding: 0.8rem; background: var(--blanco); border: none; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);" onclick="showPage('chatPage')">
                         <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">🛡️</div>
                         <div>Chat Seguridad</div>
@@ -424,6 +472,28 @@
                 <div class="card-title">Mis Reportes Recientes</div>
                 <div id="reportsList" style="margin-top: 1rem;">
                     <!-- Los reportes se cargarán aquí dinámicamente -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Página de Primeros Auxilios -->
+        <div id="firstAidPage" class="page">
+            <div class="chat-container">
+                <div class="chat-header">
+                    Asistente de Primeros Auxilios
+                </div>
+                <div class="chat-messages" id="firstAidChat">
+                    <div class="message received">
+                        <div>Hola, soy tu asistente de emergencias. Selecciona una opción:</div>
+                    </div>
+                </div>
+                <div class="first-aid-options">
+                    <button class="first-aid-btn" onclick="sendFirstAidQuery('quemadura')">Quemadura</button>
+                    <button class="first-aid-btn" onclick="sendFirstAidQuery('herida')">Herida</button>
+                    <button class="first-aid-btn" onclick="sendFirstAidQuery('atragantamiento')">Atragantamiento</button>
+                    <button class="first-aid-btn" onclick="sendFirstAidQuery('desmayo')">Desmayo</button>
+                    <button class="first-aid-btn" onclick="sendFirstAidQuery('fractura')">Fractura</button>
+                    <button class="first-aid-btn" onclick="sendFirstAidQuery('hemorragia')">Hemorragia</button>
                 </div>
             </div>
         </div>
@@ -511,6 +581,7 @@
         let emergencyActive = false;
         let map;
         let userMarker;
+        let watchId;
         let reports = [
             {
                 id: 1,
@@ -549,7 +620,7 @@
             }, 2000);
         });
         
-        // Inicializar mapa
+        // 1. GEOLOCALIZACIÓN EN TIEMPO REAL
         function initMap() {
             map = L.map('campusMap').setView([4.6843, -74.0648], 16);
             
@@ -567,7 +638,7 @@
             }).addTo(map).bindPopup("Universidad El Bosque");
             
             // Marcador del usuario
-            userMarker = L.marker([4.6835, -74.0635], {
+            userMarker = L.marker([4.6843, -74.0648], {
                 icon: L.divIcon({
                     className: 'user-marker',
                     html: '📍',
@@ -577,9 +648,34 @@
             
             // Puntos de seguridad
             addSecurityPoints();
+            
+            // Iniciar seguimiento de ubicación
+            startTracking();
         }
         
-        // Añadir puntos de seguridad
+        function startTracking() {
+            if (navigator.geolocation) {
+                watchId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        const userLatLng = [position.coords.latitude, position.coords.longitude];
+                        userMarker.setLatLng(userLatLng);
+                        map.panTo(userLatLng);
+                        document.getElementById('locationStatus').textContent = 
+                            `Ubicación actualizada: ${position.coords.latitude.toFixed(5)}, ${position.coords.longitude.toFixed(5)}`;
+                    },
+                    (error) => {
+                        console.error("Error en geolocalización:", error);
+                        document.getElementById('locationStatus').textContent = 
+                            "Error: Activa la ubicación para mejores resultados";
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            } else {
+                document.getElementById('locationStatus').textContent = 
+                    "Geolocalización no soportada por tu navegador";
+            }
+        }
+        
         function addSecurityPoints() {
             const points = [
                 { coords: [4.6845, -74.0650], title: "Puesto de Seguridad UEB", type: "security" },
@@ -603,6 +699,76 @@
             });
         }
         
+        // 2. BOTÓN DE ACOMPAÑAMIENTO SEGURO
+        function solicitarAcompanamiento() {
+            if (!navigator.geolocation) {
+                alert("No se puede obtener tu ubicación");
+                return;
+            }
+            
+            navigator.geolocation.getCurrentPosition((position) => {
+                const userLatLng = [position.coords.latitude, position.coords.longitude];
+                const destino = prompt("¿A qué edificio necesitas acompañamiento? (Ej: Biblioteca, Cafetería)");
+                
+                if (destino) {
+                    // Simular envío a seguridad
+                    showNotification(`Acompañamiento solicitado a ${destino}`, "verde");
+                    
+                    // Mostrar en el chat
+                    addMessage(
+                        "Sistema", 
+                        `Solicitud de acompañamiento a ${destino} desde ${userLatLng[0].toFixed(5)}, ${userLatLng[1].toFixed(5)}`, 
+                        "received",
+                        "chatMessages"
+                    );
+                    
+                    // Simular respuesta de seguridad
+                    setTimeout(() => {
+                        addMessage(
+                            "Seguridad UEB", 
+                            `Un guardia llegará en 5 minutos. Permanece en un lugar visible.`, 
+                            "received",
+                            "chatMessages"
+                        );
+                    }, 2000);
+                }
+            });
+        }
+        
+        // 3. CHAT DE PRIMEROS AUXILIOS CON IA
+        function sendFirstAidQuery(emergencyType) {
+            const chat = document.getElementById('firstAidChat');
+            
+            // Mensaje del usuario
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message sent';
+            userMsg.innerHTML = `<div>${emergencyType}</div>`;
+            chat.appendChild(userMsg);
+            
+            // Respuesta de IA
+            setTimeout(() => {
+                const response = getFirstAidResponse(emergencyType);
+                const botMsg = document.createElement('div');
+                botMsg.className = 'message received';
+                botMsg.innerHTML = `<div>${response}</div>`;
+                chat.appendChild(botMsg);
+                chat.scrollTop = chat.scrollHeight;
+            }, 1000);
+        }
+        
+        function getFirstAidResponse(emergencyType) {
+            const responses = {
+                "quemadura": "1️⃣ Enfría con agua corriente 20 min\n2️⃣ No uses hielo ni cremas\n3️⃣ Cubre con gasa estéril\n4️⃣ Si es grave, llama al 123",
+                "herida": "1️⃣ Limpia con agua y jabón\n2️⃣ Aplica presión para detener sangrado\n3️⃣ Usa gasa estéril\n4️⃣ Si es profunda, busca atención médica",
+                "atragantamiento": "1️⃣ Pide que tosa con fuerza\n2️⃣ Aplica 5 palmadas interescapulares\n3️⃣ Realiza la maniobra de Heimlich\n4️⃣ Si pierde conciencia, inicia RCP",
+                "desmayo": "1️⃣ Acuesta a la persona\n2️⃣ Eleva sus piernas 30 cm\n3️⃣ Afloja ropa ajustada\n4️⃣ No le des comida/bebida\n5️⃣ Si no recupera conciencia en 1 min, llama al 123",
+                "fractura": "1️⃣ Inmoviliza el área afectada\n2️⃣ Aplica hielo envuelto en tela\n3️⃣ No trates de enderezar\n4️⃣ Busca atención médica inmediata",
+                "hemorragia": "1️⃣ Aplica presión directa\n2️⃣ Eleva la herida sobre el corazón\n3️⃣ Usa vendaje compresivo\n4️⃣ Si no cesa, llama al 123"
+            };
+            
+            return responses[emergencyType] || "Por favor describe la emergencia con más detalle";
+        }
+        
         // Configurar botón de pánico
         function setupPanicButton() {
             const panicButton = document.getElementById('panicButton');
@@ -624,7 +790,7 @@
                         alert("¡Se ha activado la alarma! Seguridad ha sido notificada");
                         
                         // Notificar al chat automáticamente
-                        addMessage("Sistema", "Alerta de emergencia activada desde tu ubicación", "received");
+                        addMessage("Sistema", "Alerta de emergencia activada desde tu ubicación", "received", "chatMessages");
                         
                         // Crear reporte automático
                         const newReport = {
@@ -657,7 +823,7 @@
         function sendMessage() {
             const input = document.getElementById('messageInput');
             if (input.value.trim() !== "") {
-                addMessage("Tú", input.value, "sent");
+                addMessage("Tú", input.value, "sent", "chatMessages");
                 input.value = "";
                 
                 // Simular respuesta después de 1-3 segundos
@@ -671,7 +837,7 @@
                         "¿La persona aún está allí?"
                     ];
                     const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-                    addMessage("Oficial Martínez", randomResponse, "received");
+                    addMessage("Oficial Martínez", randomResponse, "received", "chatMessages");
                 }, 1000 + Math.random() * 2000);
             }
         }
@@ -682,8 +848,8 @@
             }
         }
         
-        function addMessage(sender, text, type) {
-            const chat = document.getElementById('chatMessages');
+        function addMessage(sender, text, type, containerId) {
+            const chat = document.getElementById(containerId);
             const now = new Date();
             const timeString = now.getHours() + ":" + (now.getMinutes() < 10 ? "0" : "") + now.getMinutes();
             
@@ -735,7 +901,7 @@
             showNotification("Reporte enviado con éxito", "verde");
             
             // Notificar al chat
-            addMessage("Sistema", `Nuevo reporte de ${typeText}: ${description}`, "received");
+            addMessage("Sistema", `Nuevo reporte de ${typeText}: ${description}`, "received", "chatMessages");
         }
         
         function loadReports() {

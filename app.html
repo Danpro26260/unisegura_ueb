@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniSegura - Universidad El Bosque</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --verde-bosque: #2E8B57;
+            --verde-claro: #3CB371;
+            --blanco: #FFFFFF;
+            --rojo-emergencia: #FF0000;
+            --gris-oscuro: #36454F;
+            --gris-claro: #F5F5F5;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: var(--gris-claro);
+            color: #333;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Header */
+        .header {
+            background: var(--verde-bosque);
+            color: var(--blanco);
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 1000;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+        
+        .logo-icon {
+            width: 30px;
+            height: 30px;
+            background: var(--blanco);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--verde-bosque);
+            font-weight: bold;
+        }
+        
+        /* Contenido principal */
+        .main-content {
+            height: calc(100vh - 180px);
+            overflow-y: auto;
+            padding-bottom: 20px;
+        }
+        
+        /* Páginas */
+        .page {
+            display: none;
+            padding: 1rem;
+        }
+        
+        .page.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Mapa compacto */
+        .map-container {
+            position: relative;
+            margin-bottom: 1rem;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            height: 200px;
+        }
+        
+        #campusMap {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .map-overlay {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.9);
+            padding: 0.5rem 1rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        /* Botón de pánico */
+        .panic-btn-container {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .panic-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: var(--rojo-emergencia);
+            color: var(--blanco);
+            border: none;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 20px rgba(255, 0, 0, 0.4);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .panic-btn.active {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(255, 0, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
+        }
+        
+        /* Chat */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 250px);
+            background: var(--blanco);
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        .chat-header {
+            background: var(--verde-bosque);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message {
+            margin-bottom: 1rem;
+            max-width: 80%;
+        }
+        
+        .received {
+            align-self: flex-start;
+            background: #f1f1f1;
+            padding: 0.8rem;
+            border-radius: 0 12px 12px 12px;
+        }
+        
+        .sent {
+            align-self: flex-end;
+            background: var(--verde-bosque);
+            color: white;
+            padding: 0.8rem;
+            border-radius: 12px 0 12px 12px;
+        }
+        
+        .message-time {
+            font-size: 0.7rem;
+            color: #777;
+            margin-top: 0.3rem;
+            text-align: right;
+        }
+        
+        .chat-input {
+            display: flex;
+            padding: 1rem;
+            border-top: 1px solid #eee;
+            background: var(--blanco);
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            margin-right: 0.5rem;
+        }
+        
+        .send-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--verde-bosque);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Tarjetas */
+        .card {
+            background: var(--blanco);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .card-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--gris-oscuro);
+        }
+        
+        /* Barra de navegación */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--blanco);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.8rem 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #777;
+            font-size: 0.8rem;
+            text-decoration: none;
+            width: 25%;
+        }
+        
+        .nav-item.active {
+            color: var(--verde-bosque);
+            position: relative;
+        }
+        
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            width: 30px;
+            height: 3px;
+            background: var(--verde-bosque);
+            border-radius: 3px;
+        }
+        
+        .nav-icon {
+            font-size: 1.4rem;
+            margin-bottom: 0.3rem;
+            transition: all 0.3s;
+        }
+        
+        .nav-item.active .nav-icon {
+            transform: translateY(-5px);
+        }
+        
+        /* Notificación */
+        .notification {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--verde-bosque);
+            color: var(--blanco);
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+            animation: slideIn 0.3s forwards;
+        }
+        
+        @keyframes slideIn {
+            from { top: 50px; opacity: 0; }
+            to { top: 70px; opacity: 1; }
+        }
+        
+        /* Estado de emergencia */
+        .emergency-active {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Botón de logout */
+        .logout-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <button class="logout-btn" onclick="logout()">👋</button>
+        <div class="logo">
+            <div class="logo-icon">UEB</div>
+            <h2>UniSegura - El Bosque</h2>
+        </div>
+        <p>Seguridad integral para nuestra comunidad</p>
+    </div>
+    
+    <!-- Contenido principal -->
+    <div class="main-content">
+        <!-- Página de Inicio -->
+        <div id="homePage" class="page active">
+            <div class="card">
+                <div class="card-title">Sistema de Seguridad Activo</div>
+                <p>Conectado a la red de la Universidad El Bosque</p>
+            </div>
+            
+            <div class="map-container">
+                <div id="campusMap"></div>
+                <div class="map-overlay">📍 Campus Principal - Universidad El Bosque</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Acciones rápidas</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <button style="padding: 0.8rem; background: var(--blanco); border: none; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);" onclick="showPage('chatPage')">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">🛡️</div>
+                        <div>Chat Seguridad</div>
+                    </button>
+                    <button style="padding: 0.8rem; background: var(--blanco); border: none; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);" onclick="showPage('reportsPage')">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">📝</div>
+                        <div>Reportes</div>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Página de Chat -->
+        <div id="chatPage" class="page">
+            <div class="chat-container">
+                <div class="chat-header">
+                    Chat con Seguridad Universitaria
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message received">
+                        <div>Hola, soy el Oficial Martínez. ¿En qué puedo ayudarte?</div>
+                        <div class="message-time">10:24 AM</div>
+                    </div>
+                    <div class="message sent">
+                        <div>Hay una persona sospechosa en la biblioteca</div>
+                        <div class="message-time">10:25 AM</div>
+                    </div>
+                    <div class="message received">
+                        <div>Gracias por reportar. ¿Puedes describir a la persona?</div>
+                        <div class="message-time">10:26 AM</div>
+                    </div>
+                </div>
+                <div class="chat-input">
+                    <input type="text" id="messageInput" placeholder="Escribe tu mensaje..." onkeypress="handleKeyPress(event)">
+                    <button class="send-btn" onclick="sendMessage()">↑</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Página de Reportes -->
+        <div id="reportsPage" class="page">
+            <div class="card">
+                <div class="card-title">Reportar Incidente</div>
+                <div style="margin-top: 1rem;">
+                    <select id="incidentType" style="width: 100%; padding: 0.8rem; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 1rem;">
+                        <option value="">Tipo de incidente</option>
+                        <option value="robo">Robo</option>
+                        <option value="sospechoso">Persona sospechosa</option>
+                        <option value="accidente">Accidente</option>
+                        <option value="medica">Emergencia médica</option>
+                    </select>
+                    <textarea id="incidentDescription" style="width: 100%; padding: 0.8rem; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 1rem;" placeholder="Descripción del incidente"></textarea>
+                    <button onclick="submitReport()" style="width: 100%; padding: 1rem; background: var(--verde-bosque); color: white; border: none; border-radius: 10px;">Enviar Reporte</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Mis Reportes Recientes</div>
+                <div id="reportsList" style="margin-top: 1rem;">
+                    <!-- Los reportes se cargarán aquí dinámicamente -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Página de Perfil -->
+        <div id="profilePage" class="page">
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--verde-bosque); color: white; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 1rem;">JP</div>
+                <h3>Juan Pérez</h3>
+                <p>Estudiante de Medicina</p>
+            </div>
+            
+            <div class="card">
+                <div style="margin-bottom: 1rem;">
+                    <div style="font-size: 0.8rem; color: #777;">Matrícula</div>
+                    <div style="font-weight: 500;">20231045</div>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <div style="font-size: 0.8rem; color: #777;">Correo</div>
+                    <div style="font-weight: 500;">j.perez@unbosque.edu.co</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.8rem; color: #777;">Teléfono</div>
+                    <div style="font-weight: 500;">+57 310 123 4567</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Contactos de Emergencia</div>
+                <div style="margin-top: 1rem;">
+                    <div style="padding: 1rem; border-bottom: 1px solid #eee;">
+                        <div style="font-weight: 500;">María Gómez</div>
+                        <div style="font-size: 0.8rem; color: #777;">Madre - 555 123 4567</div>
+                    </div>
+                    <div style="padding: 1rem; border-bottom: 1px solid #eee;">
+                        <div style="font-weight: 500;">Carlos Pérez</div>
+                        <div style="font-size: 0.8rem; color: #777;">Padre - 555 765 4321</div>
+                    </div>
+                    <div style="padding: 1rem;">
+                        <div style="font-weight: 500;">Seguridad UEB</div>
+                        <div style="font-size: 0.8rem; color: #777;">555 987 6543</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Botón de pánico -->
+    <div class="panic-btn-container">
+        <button id="panicButton" class="panic-btn">🚨</button>
+    </div>
+    
+    <!-- Barra de navegación -->
+    <div class="nav-bar">
+        <a href="#" class="nav-item active" onclick="showPage('homePage')">
+            <span class="nav-icon">🏠</span>
+            <span>Inicio</span>
+        </a>
+        <a href="#" class="nav-item" onclick="showPage('chatPage')">
+            <span class="nav-icon">💬</span>
+            <span>Chat</span>
+        </a>
+        <a href="#" class="nav-item" onclick="showPage('reportsPage')">
+            <span class="nav-icon">📝</span>
+            <span>Reportes</span>
+        </a>
+        <a href="#" class="nav-item" onclick="showPage('profilePage')">
+            <span class="nav-icon">👤</span>
+            <span>Perfil</span>
+        </a>
+    </div>
+    
+    <!-- Notificación -->
+    <div id="notification" class="notification">
+        ¡Alerta recibida en tu zona!
+    </div>
+    
+    <!-- Audio de sirena (usando Howler.js) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+    <!-- Leaflet JS para el mapa -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // Variables globales
+        let emergencyActive = false;
+        let map;
+        let userMarker;
+        let reports = [
+            {
+                id: 1,
+                type: "robo",
+                description: "Robo de celular en la biblioteca",
+                location: "Biblioteca Central",
+                date: "15/03/2023 14:30",
+                status: "en_revision"
+            },
+            {
+                id: 2,
+                type: "sospechoso",
+                description: "Persona merodeando en estacionamiento",
+                location: "Estacionamiento Norte",
+                date: "10/03/2023 08:45",
+                status: "resuelto"
+            }
+        ];
+        
+        // Configurar sirena con Howler
+        const sirenSound = new Howl({
+            src: ['https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3'],
+            loop: true,
+            volume: 0.8
+        });
+        
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            setupPanicButton();
+            loadReports();
+            
+            // Mostrar notificación de prueba
+            setTimeout(() => {
+                showNotification("Bienvenido a UniSegura", "verde");
+            }, 2000);
+        });
+        
+        // Inicializar mapa
+        function initMap() {
+            map = L.map('campusMap').setView([4.6843, -74.0648], 16);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Marcador de la universidad
+            L.marker([4.6843, -74.0648], {
+                icon: L.divIcon({
+                    className: 'uni-marker',
+                    html: '🏫',
+                    iconSize: [30, 30]
+                })
+            }).addTo(map).bindPopup("Universidad El Bosque");
+            
+            // Marcador del usuario
+            userMarker = L.marker([4.6835, -74.0635], {
+                icon: L.divIcon({
+                    className: 'user-marker',
+                    html: '📍',
+                    iconSize: [25, 25]
+                })
+            }).addTo(map).bindPopup("Tu ubicación aproximada");
+            
+            // Puntos de seguridad
+            addSecurityPoints();
+        }
+        
+        // Añadir puntos de seguridad
+        function addSecurityPoints() {
+            const points = [
+                { coords: [4.6845, -74.0650], title: "Puesto de Seguridad UEB", type: "security" },
+                { coords: [4.6830, -74.0630], title: "CAI Calle 134", type: "police" },
+                { coords: [4.6820, -74.0620], title: "Zona de riesgo", type: "danger" }
+            ];
+            
+            points.forEach(point => {
+                let icon;
+                if (point.type === "security") {
+                    icon = L.divIcon({ html: '🛡️', iconSize: [25, 25] });
+                } else if (point.type === "police") {
+                    icon = L.divIcon({ html: '🚔', iconSize: [25, 25] });
+                } else {
+                    icon = L.divIcon({ html: '⚠️', iconSize: [25, 25] });
+                }
+                
+                L.marker(point.coords, { icon: icon })
+                    .addTo(map)
+                    .bindPopup(point.title);
+            });
+        }
+        
+        // Configurar botón de pánico
+        function setupPanicButton() {
+            const panicButton = document.getElementById('panicButton');
+            
+            panicButton.addEventListener('click', function() {
+                if (!emergencyActive) {
+                    if (confirm("¿Estás seguro que quieres activar la alarma de emergencia?")) {
+                        emergencyActive = true;
+                        panicButton.classList.add('active');
+                        sirenSound.play();
+                        
+                        // Vibrar en dispositivos móviles
+                        if (navigator.vibrate) {
+                            navigator.vibrate([500, 200, 500, 200, 500]);
+                        }
+                        
+                        // Mostrar alerta
+                        showNotification("¡ALERTA DE EMERGENCIA ACTIVADA!", "rojo");
+                        alert("¡Se ha activado la alarma! Seguridad ha sido notificada");
+                        
+                        // Notificar al chat automáticamente
+                        addMessage("Sistema", "Alerta de emergencia activada desde tu ubicación", "received");
+                        
+                        // Crear reporte automático
+                        const newReport = {
+                            id: reports.length + 1,
+                            type: "emergencia",
+                            description: "Botón de pánico activado",
+                            location: "Ubicación del usuario",
+                            date: new Date().toLocaleString(),
+                            status: "en_revision"
+                        };
+                        reports.unshift(newReport);
+                        loadReports();
+                    }
+                } else {
+                    // Desactivar emergencia
+                    emergencyActive = false;
+                    panicButton.classList.remove('active');
+                    sirenSound.stop();
+                    
+                    if (navigator.vibrate) {
+                        navigator.vibrate(0);
+                    }
+                    
+                    showNotification("Alarma desactivada", "verde");
+                }
+            });
+        }
+        
+        // Funciones del chat
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            if (input.value.trim() !== "") {
+                addMessage("Tú", input.value, "sent");
+                input.value = "";
+                
+                // Simular respuesta después de 1-3 segundos
+                setTimeout(() => {
+                    const responses = [
+                        "Hemos recibido tu mensaje",
+                        "Un equipo está en camino",
+                        "¿Puedes dar más detalles?",
+                        "Gracias por reportar",
+                        "¿En qué área exactamente?",
+                        "¿La persona aún está allí?"
+                    ];
+                    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                    addMessage("Oficial Martínez", randomResponse, "received");
+                }, 1000 + Math.random() * 2000);
+            }
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        }
+        
+        function addMessage(sender, text, type) {
+            const chat = document.getElementById('chatMessages');
+            const now = new Date();
+            const timeString = now.getHours() + ":" + (now.getMinutes() < 10 ? "0" : "") + now.getMinutes();
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.innerHTML = `
+                <div>${text}</div>
+                <div class="message-time">${timeString}</div>
+            `;
+            
+            chat.appendChild(messageDiv);
+            chat.scrollTop = chat.scrollHeight;
+        }
+        
+        // Funciones de reportes
+        function submitReport() {
+            const type = document.getElementById('incidentType').value;
+            const description = document.getElementById('incidentDescription').value;
+            
+            if (!type || !description) {
+                alert("Por favor completa todos los campos");
+                return;
+            }
+            
+            const typeText = {
+                'robo': 'Robo',
+                'sospechoso': 'Persona sospechosa',
+                'accidente': 'Accidente',
+                'medica': 'Emergencia médica'
+            }[type];
+            
+            const newReport = {
+                id: reports.length + 1,
+                type: type,
+                description: description,
+                location: "Campus Principal",
+                date: new Date().toLocaleString(),
+                status: "en_revision"
+            };
+            
+            reports.unshift(newReport);
+            loadReports();
+            
+            // Limpiar formulario
+            document.getElementById('incidentType').value = "";
+            document.getElementById('incidentDescription').value = "";
+            
+            // Mostrar confirmación
+            showNotification("Reporte enviado con éxito", "verde");
+            
+            // Notificar al chat
+            addMessage("Sistema", `Nuevo reporte de ${typeText}: ${description}`, "received");
+        }
+        
+        function loadReports() {
+            const container = document.getElementById('reportsList');
+            container.innerHTML = "";
+            
+            reports.forEach(report => {
+                const statusText = {
+                    'en_revision': 'En revisión',
+                    'resuelto': 'Resuelto'
+                }[report.status] || report.status;
+                
+                const statusColor = {
+                    'en_revision': 'var(--verde-bosque)',
+                    'resuelto': '#777'
+                }[report.status] || '#777';
+                
+                const reportDiv = document.createElement('div');
+                reportDiv.style.padding = '1rem';
+                reportDiv.style.borderBottom = '1px solid #eee';
+                reportDiv.innerHTML = `
+                    <div style="font-weight: 500;">${report.description}</div>
+                    <div style="font-size: 0.8rem; color: #777;">${report.location} - ${report.date}</div>
+                    <div style="font-size: 0.8rem; color: ${statusColor};">${statusText}</div>
+                `;
+                
+                container.appendChild(reportDiv);
+            });
+        }
+        
+        // Mostrar notificación
+        function showNotification(text, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = text;
+            notification.style.background = type === "rojo" ? "var(--rojo-emergencia)" : "var(--verde-bosque)";
+            notification.style.display = "block";
+            
+            setTimeout(() => {
+                notification.style.display = "none";
+            }, 5000);
+        }
+        
+        // Mostrar página específica
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            event.preventDefault();
+            
+            // Ajustar mapa si es la página de inicio
+            if (pageId === 'homePage' && map) {
+                setTimeout(() => {
+                    map.invalidateSize();
+                }, 300);
+            }
+        }
+        
+        // Cerrar sesión
+        function logout() {
+            if (confirm("¿Estás seguro que deseas cerrar sesión?")) {
+                window.location.href = "index.html";
+            }
+        }
+    </script>
+</body>
+</html>

@@ -375,6 +375,29 @@
             color: var(--gris-oscuro);
             margin-top: 0.5rem;
         }
+        
+        /* Estilos para lugares cercanos */
+        .location-tag {
+            display: inline-block;
+            background: var(--verde-claro);
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            margin: 0.2rem;
+            cursor: pointer;
+        }
+        
+        .location-tag:hover {
+            background: var(--verde-bosque);
+        }
+        
+        .lugares-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
@@ -394,13 +417,28 @@
         <!-- Página de Inicio -->
         <div id="homePage" class="page active">
             <div class="card">
-                <div class="card-title">Tu ubicación en tiempo real</div>
-                <div id="locationStatus" class="location-status">Obteniendo ubicación...</div>
+                <div class="card-title">Sistema de Seguridad Activo</div>
+                <p>Conectado a la red de la Universidad El Bosque</p>
             </div>
             
             <div class="map-container">
                 <div id="campusMap"></div>
-                <div class="map-overlay">📍 Siguiendo tu ubicación</div>
+                <div class="map-overlay">📍 Campus Principal - Universidad El Bosque</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Lugares cercanos</div>
+                <div class="lugares-container">
+                    <span class="location-tag" onclick="mostrarEnMapa('cueva')">La Cueva</span>
+                    <span class="location-tag" onclick="mostrarEnMapa('cancha futbol')">Cancha Fútbol</span>
+                    <span class="location-tag" onclick="mostrarEnMapa('cancha voleybol')">Cancha Voleybol</span>
+                    <span class="location-tag" onclick="mostrarEnMapa('cafeteria oma')">Cafetería Oma</span>
+                    <span class="location-tag" onclick="mostrarEnMapa('sede hub')">Sede Hub</span>
+                    <span class="location-tag" onclick="mostrarEnMapa('jumbo 134')">Jumbo 134</span>
+                    <span class="location-tag" onclick="mostrarEnMapa('exito wow 134')">Éxito Wow 134</span>
+                    <span class="location-tag" onclick="mostrarEnMapa('hospital los cobos')">Hospital Los Cobos</span>
+                    <span class="location-tag" onclick="mostrarEnMapa('novena y septima')">Novena y Septima</span>
+                </div>
             </div>
             
             <div class="card">
@@ -463,6 +501,23 @@
                         <option value="accidente">Accidente</option>
                         <option value="medica">Emergencia médica</option>
                     </select>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <div style="font-size: 0.9rem; margin-bottom: 0.5rem;">Lugar del incidente:</div>
+                        <div class="lugares-container">
+                            <span class="location-tag" onclick="seleccionarLugar('cueva')">La Cueva</span>
+                            <span class="location-tag" onclick="seleccionarLugar('cancha futbol')">Cancha Fútbol</span>
+                            <span class="location-tag" onclick="seleccionarLugar('cancha voleybol')">Cancha Voleybol</span>
+                            <span class="location-tag" onclick="seleccionarLugar('cafeteria oma')">Cafetería Oma</span>
+                            <span class="location-tag" onclick="seleccionarLugar('sede hub')">Sede Hub</span>
+                            <span class="location-tag" onclick="seleccionarLugar('jumbo 134')">Jumbo 134</span>
+                            <span class="location-tag" onclick="seleccionarLugar('exito wow 134')">Éxito Wow 134</span>
+                            <span class="location-tag" onclick="seleccionarLugar('hospital los cobos')">Hospital Los Cobos</span>
+                            <span class="location-tag" onclick="seleccionarLugar('novena y septima')">Novena y Septima</span>
+                        </div>
+                        <input type="text" id="incidentLocation" placeholder="O especifica otro lugar" style="width: 100%; padding: 0.8rem; border-radius: 10px; border: 1px solid #ddd; margin-top: 0.5rem;">
+                    </div>
+                    
                     <textarea id="incidentDescription" style="width: 100%; padding: 0.8rem; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 1rem;" placeholder="Descripción del incidente"></textarea>
                     <button onclick="submitReport()" style="width: 100%; padding: 1rem; background: var(--verde-bosque); color: white; border: none; border-radius: 10px;">Enviar Reporte</button>
                 </div>
@@ -601,6 +656,67 @@
             }
         ];
         
+        // Lugares cercanos a la Universidad El Bosque
+        const lugaresCercanos = {
+            "cueva": { 
+                nombre: "La Cueva", 
+                coords: [4.6840, -74.0652], 
+                icono: "🕳️",
+                direccion: "Cerca de la biblioteca central"
+            },
+            "cancha futbol": { 
+                nombre: "Cancha de Fútbol Sintética", 
+                coords: [4.6835, -74.0638], 
+                icono: "⚽",
+                direccion: "Zona deportiva norte"
+            },
+            "cancha voleybol": { 
+                nombre: "Cancha de Voleybol", 
+                coords: [4.6838, -74.0640], 
+                icono: "🏐",
+                direccion: "Zona deportiva norte"
+            },
+            "cafeteria oma": { 
+                nombre: "Cafetería Oma", 
+                coords: [4.6842, -74.0645], 
+                icono: "☕",
+                direccion: "Edificio principal, primer piso"
+            },
+            "sede hub": { 
+                nombre: "Sede Hub", 
+                coords: [4.6845, -74.0635], 
+                icono: "🏢",
+                direccion: "Carrera 9 #131A-02"
+            },
+            "jumbo 134": { 
+                nombre: "Jumbo Calle 134", 
+                coords: [4.6850, -74.0620], 
+                icono: "🛒",
+                direccion: "Calle 134 #11-20"
+            },
+            "exito wow 134": { 
+                nombre: "Éxito Wow 134", 
+                coords: [4.6852, -74.0618], 
+                icono: "🛍️",
+                direccion: "Calle 134 #9-45"
+            },
+            "hospital los cobos": { 
+                nombre: "Hospital Los Cobos", 
+                coords: [4.6860, -74.0600], 
+                icono: "🏥",
+                direccion: "Carrera 9 #134-25"
+            },
+            "novena y septima": { 
+                nombre: "Novena y Septima", 
+                coords: [4.6865, -74.0595], 
+                icono: "📍",
+                direccion: "Carrera 7 #134-30"
+            }
+        };
+
+        // Marcadores de lugares
+        let lugarMarkers = {};
+
         // Configurar sirena con Howler
         const sirenSound = new Howl({
             src: ['https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3'],
@@ -620,7 +736,7 @@
             }, 2000);
         });
         
-        // 1. GEOLOCALIZACIÓN EN TIEMPO REAL
+        // Inicializar mapa
         function initMap() {
             map = L.map('campusMap').setView([4.6843, -74.0648], 16);
             
@@ -644,15 +760,39 @@
                     html: '📍',
                     iconSize: [25, 25]
                 })
-            }).addTo(map).bindPopup("Tu ubicación aproximada");
+            }).addTo(map).bindPopup("Tu ubicación");
             
-            // Puntos de seguridad
-            addSecurityPoints();
+            // Añadir lugares cercanos al mapa
+            Object.keys(lugaresCercanos).forEach(key => {
+                const lugar = lugaresCercanos[key];
+                lugarMarkers[key] = L.marker(lugar.coords, {
+                    icon: L.divIcon({ html: lugar.icono, iconSize: [25, 25] })
+                }).addTo(map).bindPopup(`<b>${lugar.nombre}</b><br>${lugar.direccion}`);
+            });
             
-            // Iniciar seguimiento de ubicación
             startTracking();
         }
         
+        // Mostrar lugar en el mapa
+        function mostrarEnMapa(lugarKey) {
+            const lugar = lugaresCercanos[lugarKey];
+            if (lugar) {
+                map.setView(lugar.coords, 18);
+                lugarMarkers[lugarKey].openPopup();
+                showNotification(`Mostrando ${lugar.nombre} en el mapa`, "verde");
+            }
+        }
+        
+        // Seleccionar lugar para reporte
+        function seleccionarLugar(lugarKey) {
+            const lugar = lugaresCercanos[lugarKey];
+            if (lugar) {
+                document.getElementById('incidentLocation').value = lugar.nombre;
+                showNotification(`Lugar seleccionado: ${lugar.nombre}`, "verde");
+            }
+        }
+        
+        // Iniciar seguimiento de ubicación
         function startTracking() {
             if (navigator.geolocation) {
                 watchId = navigator.geolocation.watchPosition(
@@ -674,99 +814,6 @@
                 document.getElementById('locationStatus').textContent = 
                     "Geolocalización no soportada por tu navegador";
             }
-        }
-        
-        function addSecurityPoints() {
-            const points = [
-                { coords: [4.6845, -74.0650], title: "Puesto de Seguridad UEB", type: "security" },
-                { coords: [4.6830, -74.0630], title: "CAI Calle 134", type: "police" },
-                { coords: [4.6820, -74.0620], title: "Zona de riesgo", type: "danger" }
-            ];
-            
-            points.forEach(point => {
-                let icon;
-                if (point.type === "security") {
-                    icon = L.divIcon({ html: '🛡️', iconSize: [25, 25] });
-                } else if (point.type === "police") {
-                    icon = L.divIcon({ html: '🚔', iconSize: [25, 25] });
-                } else {
-                    icon = L.divIcon({ html: '⚠️', iconSize: [25, 25] });
-                }
-                
-                L.marker(point.coords, { icon: icon })
-                    .addTo(map)
-                    .bindPopup(point.title);
-            });
-        }
-        
-        // 2. BOTÓN DE ACOMPAÑAMIENTO SEGURO
-        function solicitarAcompanamiento() {
-            if (!navigator.geolocation) {
-                alert("No se puede obtener tu ubicación");
-                return;
-            }
-            
-            navigator.geolocation.getCurrentPosition((position) => {
-                const userLatLng = [position.coords.latitude, position.coords.longitude];
-                const destino = prompt("¿A qué edificio necesitas acompañamiento? (Ej: Biblioteca, Cafetería)");
-                
-                if (destino) {
-                    // Simular envío a seguridad
-                    showNotification(`Acompañamiento solicitado a ${destino}`, "verde");
-                    
-                    // Mostrar en el chat
-                    addMessage(
-                        "Sistema", 
-                        `Solicitud de acompañamiento a ${destino} desde ${userLatLng[0].toFixed(5)}, ${userLatLng[1].toFixed(5)}`, 
-                        "received",
-                        "chatMessages"
-                    );
-                    
-                    // Simular respuesta de seguridad
-                    setTimeout(() => {
-                        addMessage(
-                            "Seguridad UEB", 
-                            `Un guardia llegará en 5 minutos. Permanece en un lugar visible.`, 
-                            "received",
-                            "chatMessages"
-                        );
-                    }, 2000);
-                }
-            });
-        }
-        
-        // 3. CHAT DE PRIMEROS AUXILIOS CON IA
-        function sendFirstAidQuery(emergencyType) {
-            const chat = document.getElementById('firstAidChat');
-            
-            // Mensaje del usuario
-            const userMsg = document.createElement('div');
-            userMsg.className = 'message sent';
-            userMsg.innerHTML = `<div>${emergencyType}</div>`;
-            chat.appendChild(userMsg);
-            
-            // Respuesta de IA
-            setTimeout(() => {
-                const response = getFirstAidResponse(emergencyType);
-                const botMsg = document.createElement('div');
-                botMsg.className = 'message received';
-                botMsg.innerHTML = `<div>${response}</div>`;
-                chat.appendChild(botMsg);
-                chat.scrollTop = chat.scrollHeight;
-            }, 1000);
-        }
-        
-        function getFirstAidResponse(emergencyType) {
-            const responses = {
-                "quemadura": "1️⃣ Enfría con agua corriente 20 min\n2️⃣ No uses hielo ni cremas\n3️⃣ Cubre con gasa estéril\n4️⃣ Si es grave, llama al 123",
-                "herida": "1️⃣ Limpia con agua y jabón\n2️⃣ Aplica presión para detener sangrado\n3️⃣ Usa gasa estéril\n4️⃣ Si es profunda, busca atención médica",
-                "atragantamiento": "1️⃣ Pide que tosa con fuerza\n2️⃣ Aplica 5 palmadas interescapulares\n3️⃣ Realiza la maniobra de Heimlich\n4️⃣ Si pierde conciencia, inicia RCP",
-                "desmayo": "1️⃣ Acuesta a la persona\n2️⃣ Eleva sus piernas 30 cm\n3️⃣ Afloja ropa ajustada\n4️⃣ No le des comida/bebida\n5️⃣ Si no recupera conciencia en 1 min, llama al 123",
-                "fractura": "1️⃣ Inmoviliza el área afectada\n2️⃣ Aplica hielo envuelto en tela\n3️⃣ No trates de enderezar\n4️⃣ Busca atención médica inmediata",
-                "hemorragia": "1️⃣ Aplica presión directa\n2️⃣ Eleva la herida sobre el corazón\n3️⃣ Usa vendaje compresivo\n4️⃣ Si no cesa, llama al 123"
-            };
-            
-            return responses[emergencyType] || "Por favor describe la emergencia con más detalle";
         }
         
         // Configurar botón de pánico
@@ -867,25 +914,19 @@
         // Funciones de reportes
         function submitReport() {
             const type = document.getElementById('incidentType').value;
+            const location = document.getElementById('incidentLocation').value;
             const description = document.getElementById('incidentDescription').value;
             
-            if (!type || !description) {
+            if (!type || !location || !description) {
                 alert("Por favor completa todos los campos");
                 return;
             }
             
-            const typeText = {
-                'robo': 'Robo',
-                'sospechoso': 'Persona sospechosa',
-                'accidente': 'Accidente',
-                'medica': 'Emergencia médica'
-            }[type];
-            
             const newReport = {
                 id: reports.length + 1,
                 type: type,
+                location: location,
                 description: description,
-                location: "Campus Principal",
                 date: new Date().toLocaleString(),
                 status: "en_revision"
             };
@@ -895,13 +936,11 @@
             
             // Limpiar formulario
             document.getElementById('incidentType').value = "";
+            document.getElementById('incidentLocation').value = "";
             document.getElementById('incidentDescription').value = "";
             
-            // Mostrar confirmación
             showNotification("Reporte enviado con éxito", "verde");
-            
-            // Notificar al chat
-            addMessage("Sistema", `Nuevo reporte de ${typeText}: ${description}`, "received", "chatMessages");
+            addMessage("Sistema", `Nuevo reporte en ${location}: ${description}`, "received", "chatMessages");
         }
         
         function loadReports() {
@@ -930,6 +969,124 @@
                 
                 container.appendChild(reportDiv);
             });
+        }
+        
+        // Funciones de primeros auxilios
+        function sendFirstAidQuery(emergencyType) {
+            const chat = document.getElementById('firstAidChat');
+            
+            // Mensaje del usuario
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message sent';
+            userMsg.innerHTML = `<div>${emergencyType}</div>`;
+            chat.appendChild(userMsg);
+            
+            // Respuesta de IA
+            setTimeout(() => {
+                const response = getFirstAidResponse(emergencyType);
+                const botMsg = document.createElement('div');
+                botMsg.className = 'message received';
+                botMsg.innerHTML = `<div>${response}</div>`;
+                chat.appendChild(botMsg);
+                chat.scrollTop = chat.scrollHeight;
+            }, 1000);
+        }
+        
+        function getFirstAidResponse(emergencyType) {
+            const responses = {
+                "quemadura": "1️⃣ Enfría con agua corriente 20 min\n2️⃣ No uses hielo ni cremas\n3️⃣ Cubre con gasa estéril\n4️⃣ Si es grave, llama al 123",
+                "herida": "1️⃣ Limpia con agua y jabón\n2️⃣ Aplica presión para detener sangrado\n3️⃣ Usa gasa estéril\n4️⃣ Si es profunda, busca atención médica",
+                "atragantamiento": "1️⃣ Pide que tosa con fuerza\n2️⃣ Aplica 5 palmadas interescapulares\n3️⃣ Realiza la maniobra de Heimlich\n4️⃣ Si pierde conciencia, inicia RCP",
+                "desmayo": "1️⃣ Acuesta a la persona\n2️⃣ Eleva sus piernas 30 cm\n3️⃣ Afloja ropa ajustada\n4️⃣ No le des comida/bebida\n5️⃣ Si no recupera conciencia en 1 min, llama al 123",
+                "fractura": "1️⃣ Inmoviliza el área afectada\n2️⃣ Aplica hielo envuelto en tela\n3️⃣ No trates de enderezar\n4️⃣ Busca atención médica inmediata",
+                "hemorragia": "1️⃣ Aplica presión directa\n2️⃣ Eleva la herida sobre el corazón\n3️⃣ Usa vendaje compresivo\n4️⃣ Si no cesa, llama al 123"
+            };
+            
+            return responses[emergencyType] || "Por favor describe la emergencia con más detalle";
+        }
+        
+        // Solicitar acompañamiento seguro
+        function solicitarAcompanamiento() {
+            if (!navigator.geolocation) {
+                alert("No se puede obtener tu ubicación");
+                return;
+            }
+            
+            navigator.geolocation.getCurrentPosition((position) => {
+                const destino = prompt("¿A qué lugar necesitas acompañamiento?\nOpciones: La Cueva, Cancha Fútbol, Cancha Voleybol, Cafetería Oma, Sede Hub, Jumbo 134, Éxito Wow 134, Hospital Los Cobos, Novena y Septima");
+                
+                if (destino) {
+                    const opcion = confirm("¿Quieres calcular la ruta segura o buscar acompañamiento grupal?");
+                    
+                    if (opcion) {
+                        // Opción de ruta segura
+                        calcularRutaSegura(destino);
+                    } else {
+                        // Opción de acompañamiento grupal
+                        buscarAcompanamientoGrupal(destino);
+                    }
+                }
+            });
+        }
+        
+        // Calcular ruta segura
+        function calcularRutaSegura(destino) {
+            if (!navigator.geolocation) {
+                alert("Geolocalización no soportada");
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition((position) => {
+                const inicio = [position.coords.latitude, position.coords.longitude];
+                const destinoCoords = Object.values(lugaresCercanos).find(l => l.nombre.toLowerCase().includes(destino.toLowerCase()))?.coords;
+                
+                if (!destinoCoords) {
+                    alert("Destino no reconocido");
+                    return;
+                }
+
+                // Simulación de ruta (en un caso real usarías API de routing)
+                const ruta = L.polyline([inicio, destinoCoords], {
+                    color: '#2E8B57',
+                    weight: 5,
+                    opacity: 0.7
+                }).addTo(map);
+
+                // Marcador de destino
+                L.marker(destinoCoords, {
+                    icon: L.divIcon({
+                        html: '🏁',
+                        iconSize: [30, 30]
+                    })
+                }).addTo(map).bindPopup(`Destino: ${destino}`);
+
+                // Ajustar vista para mostrar toda la ruta
+                map.fitBounds(ruta.getBounds());
+
+                showNotification(`Ruta calculada a ${destino}`, "verde");
+            });
+        }
+        
+        // Buscar acompañamiento grupal
+        function buscarAcompanamientoGrupal(destino) {
+            showNotification(`Buscando compañeros hacia ${destino}...`, "verde");
+            
+            // Simulación de búsqueda
+            setTimeout(() => {
+                const compañeros = ["Ana Gómez", "Carlos Pérez", "María Rodríguez"];
+                const mensaje = compañeros.length > 0 
+                    ? `Compañeros disponibles hacia ${destino}:\n${compañeros.join(", ")}\n¿Quieres unirte al grupo?`
+                    : "No hay compañeros disponibles ahora. ¿Quieres ser el primero?";
+                
+                if (confirm(mensaje)) {
+                    addMessage(
+                        "Sistema", 
+                        `Te has unido al grupo hacia ${destino}. Recibirás notificaciones cuando estén cerca.`, 
+                        "received",
+                        "chatMessages"
+                    );
+                }
+            }, 2000);
         }
         
         // Mostrar notificación

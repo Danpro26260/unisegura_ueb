@@ -11,6 +11,7 @@
             --blanco: #FFFFFF;
             --gris-oscuro: #36454F;
             --gris-claro: #F5F5F5;
+            --rojo-emergencia: #FF4444;
         }
         
         * {
@@ -145,7 +146,7 @@
         }
         
         .error-message {
-            color: #ff4444;
+            color: var(--rojo-emergencia);
             font-size: 0.9rem;
             margin-top: 0.5rem;
             display: none;
@@ -164,6 +165,76 @@
         .university-badge img {
             height: 20px;
         }
+        
+        /* Modal de verificación biométrica */
+        .verification-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .verification-content {
+            background: white;
+            color: #333;
+            padding: 2rem;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        #videoElement {
+            width: 100%;
+            max-height: 300px;
+            background: #000;
+            margin: 1rem 0;
+            border-radius: 10px;
+        }
+        
+        .verification-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+        
+        .verification-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .capture-btn {
+            background: var(--verde-bosque);
+            color: white;
+        }
+        
+        .retry-btn {
+            background: #f0f0f0;
+        }
+        
+        .consent-text {
+            font-size: 0.8rem;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #consentCheckbox {
+            margin-right: 8px;
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
@@ -178,7 +249,7 @@
         
         <p>Seguridad integral para la comunidad de la Universidad El Bosque</p>
         
-        <form id="loginForm" style="margin-top: 2rem;">
+        <form id="loginForm">
             <div class="form-group">
                 <label for="username">Usuario</label>
                 <input type="text" id="username" placeholder="Correo institucional" required>
@@ -201,6 +272,27 @@
         
         <div class="footer-text">
             © 2023 Universidad El Bosque - Todos los derechos reservados
+        </div>
+    </div>
+
+    <!-- Modal de verificación biométrica -->
+    <div id="verificationModal" class="verification-modal">
+        <div class="verification-content">
+            <h2>Verificación de Identidad</h2>
+            <p>Por seguridad, necesitamos confirmar tu identidad</p>
+            
+            <video id="videoElement" autoplay playsinline></video>
+            <canvas id="canvasElement" style="display:none;"></canvas>
+            
+            <div class="verification-actions">
+                <button id="retryBtn" class="verification-btn retry-btn">Reintentar</button>
+                <button id="captureBtn" class="verification-btn capture-btn">Continuar</button>
+            </div>
+            
+            <div class="consent-text">
+                <input type="checkbox" id="consentCheckbox" required>
+                <label for="consentCheckbox">Autorizo el uso de mi imagen para verificación</label>
+            </div>
         </div>
     </div>
 
@@ -227,7 +319,10 @@
             });
             
             if (isValid) {
-                // Verificación de identidad con selfie antes de redirigir
+                // Ocultar mensaje de error si estaba visible
+                document.getElementById('errorMessage').style.display = 'none';
+                
+                // Iniciar verificación biométrica
                 verificarIdentidad();
             } else {
                 // Mostrar error
@@ -238,76 +333,88 @@
 
         // Función para verificación de identidad con selfie
         function verificarIdentidad() {
-            const modal = document.createElement('div');
-            modal.style.position = 'fixed';
-            modal.style.top = '0';
-            modal.style.left = '0';
-            modal.style.right = '0';
-            modal.style.bottom = '0';
-            modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
-            modal.style.zIndex = '10000';
+            const modal = document.getElementById('verificationModal');
+            const video = document.getElementById('videoElement');
+            const canvas = document.getElementById('canvasElement');
+            const captureBtn = document.getElementById('captureBtn');
+            const retryBtn = document.getElementById('retryBtn');
+            const consentCheckbox = document.getElementById('consentCheckbox');
+            
+            // Mostrar modal
             modal.style.display = 'flex';
-            modal.style.flexDirection = 'column';
-            modal.style.alignItems = 'center';
-            modal.style.justifyContent = 'center';
-            modal.style.color = 'white';
             
-            modal.innerHTML = `
-                <h2>Verificación de Identidad</h2>
-                <p>Por favor, permite el acceso a tu cámara para tomar una foto de verificación</p>
-                <div id="videoContainer" style="width: 300px; height: 400px; margin: 20px 0;"></div>
-                <button id="captureBtn" style="padding: 10px 20px; background: #2E8B57; color: white; border: none; border-radius: 5px; cursor: pointer;">Tomar Foto</button>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            const video = document.createElement('video');
-            video.style.width = '100%';
-            video.style.height = '100%';
-            video.style.objectFit = 'cover';
-            video.setAttribute('autoplay', '');
-            
-            const videoContainer = document.getElementById('videoContainer');
-            videoContainer.appendChild(video);
-            
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    video.srcObject = stream;
+            // 1. Configurar cámara frontal con buena resolución
+            navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: 'user',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false 
+            }).then(stream => {
+                video.srcObject = stream;
+                
+                // 2. Configurar botón de captura
+                captureBtn.onclick = () => {
+                    if (!consentCheckbox.checked) {
+                        alert("Debes autorizar el uso de tu imagen para continuar");
+                        return;
+                    }
                     
-                    document.getElementById('captureBtn').addEventListener('click', () => {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-                        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-                        
-                        // Detener el stream de video
-                        stream.getTracks().forEach(track => track.stop());
-                        
-                        // Mostrar la foto capturada
-                        videoContainer.innerHTML = '';
-                        const img = document.createElement('img');
-                        img.src = canvas.toDataURL('image/jpeg');
-                        img.style.width = '100%';
-                        img.style.height = '100%';
-                        img.style.objectFit = 'cover';
-                        videoContainer.appendChild(img);
-                        
-                        // Confirmar y redirigir
-                        if (confirm("¿Confirmas que esta es tu foto para verificación?")) {
-                            modal.remove();
-                            window.location.href = "app.html";
-                        } else {
-                            // Volver a intentar
-                            modal.remove();
-                            verificarIdentidad();
-                        }
-                    });
-                })
-                .catch(err => {
-                    console.error("Error al acceder a la cámara:", err);
-                    alert("No se pudo acceder a la cámara. Por favor, asegúrate de otorgar los permisos necesarios.");
-                    modal.remove();
-                });
+                    // Capturar foto
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    // Detener la cámara
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    // 3. Simular verificación (en producción se enviaría al servidor)
+                    showVerificationProgress();
+                    
+                    setTimeout(() => {
+                        modal.style.display = 'none';
+                        window.location.href = "app.html";
+                    }, 2000);
+                };
+                
+                // 4. Configurar botón de reintento
+                retryBtn.onclick = () => {
+                    stream.getTracks().forEach(track => track.stop());
+                    verificarIdentidad();
+                };
+                
+            }).catch(err => {
+                console.error("Error al acceder a la cámara:", err);
+                
+                // Mostrar opciones alternativas
+                const useFallback = confirm("No se pudo acceder a la cámara. ¿Deseas continuar con verificación por código?");
+                
+                if (useFallback) {
+                    const verificationCode = prompt("Ingresa el código de verificación enviado a tu correo:");
+                    if (verificationCode === "123456") { // Código de ejemplo
+                        modal.style.display = 'none';
+                        window.location.href = "app.html";
+                    } else {
+                        alert("Código incorrecto. Por favor intenta nuevamente.");
+                    }
+                } else {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+        
+        // Mostrar progreso de verificación
+        function showVerificationProgress() {
+            const verificationContent = document.querySelector('.verification-content');
+            verificationContent.innerHTML = `
+                <h2>Verificando tu identidad</h2>
+                <div style="margin: 2rem 0;">
+                    <div style="width: 50px; height: 50px; margin: 0 auto; border: 5px solid #f3f3f3; border-top: 5px solid var(--verde-bosque); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                </div>
+                <p>Por favor espera mientras validamos tu información...</p>
+                <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+            `;
         }
         
         // Auto-completar dominio institucional

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UniSegura</title>
+    <title>UniSegura - Universidad El Bosque</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
@@ -440,13 +440,65 @@
             display: none;
             animation: slideIn 0.3s forwards;
         }
+        
+        /* Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--verde-bosque);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .slider.round {
+            border-radius: 34px;
+        }
+        
+        .slider.round:before {
+            border-radius: 50%;
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Header -->
     <div class="header">
-        <button class="logout-btn" onclick="logout()">👋</button>
+        <button class="logout-btn" id="logoutBtn">👋</button>
         <div class="logo">
             <div class="logo-icon">UEB</div>
             <h2>UniSegura - El Bosque</h2>
@@ -486,18 +538,18 @@
             
             <div class="card">
                 <div class="card-title">Acciones rápidas</div>
-                <button class="action-btn" onclick="solicitarAcompanamiento()">
+                <button class="action-btn" id="acompanamientoBtn">
                     🚶‍♂️ Solicitar acompañamiento seguro
                 </button>
-                <button class="action-btn medical" onclick="showPage('firstAidPage')">
+                <button class="action-btn medical" id="firstAidBtn">
                     🚑 Primeros Auxilios con IA
                 </button>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
-                    <button style="padding: 0.8rem; background: var(--blanco); border: none; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);" onclick="showPage('chatPage')">
+                    <button class="action-card" id="chatBtn">
                         <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">🛡️</div>
                         <div>Chat Seguridad</div>
                     </button>
-                    <button style="padding: 0.8rem; background: var(--blanco); border: none; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);" onclick="showPage('reportsPage')">
+                    <button class="action-card" id="reportsBtn">
                         <div style="font-size: 1.5rem; margin-bottom: 0.3rem;">📝</div>
                         <div>Reportes</div>
                     </button>
@@ -518,8 +570,8 @@
                     </div>
                 </div>
                 <div class="chat-input">
-                    <input type="text" id="messageInput" placeholder="Escribe tu mensaje..." onkeypress="handleKeyPress(event)">
-                    <button class="send-btn" onclick="sendMessage()">↑</button>
+                    <input type="text" id="messageInput" placeholder="Escribe tu mensaje...">
+                    <button class="send-btn" id="sendMessageBtn">↑</button>
                 </div>
             </div>
         </div>
@@ -555,7 +607,7 @@
                     </div>
                     
                     <textarea id="incidentDescription" style="width: 100%; padding: 0.8rem; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 1rem;" placeholder="Descripción del incidente"></textarea>
-                    <button onclick="submitReport()" style="width: 100%; padding: 1rem; background: var(--verde-bosque); color: white; border: none; border-radius: 10px;">Enviar Reporte</button>
+                    <button id="submitReportBtn" style="width: 100%; padding: 1rem; background: var(--verde-bosque); color: white; border: none; border-radius: 10px;">Enviar Reporte</button>
                 </div>
             </div>
             
@@ -642,28 +694,28 @@
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
                         <span>Notificaciones de zonas peligrosas</span>
                         <label class="switch">
-                            <input type="checkbox" checked>
+                            <input type="checkbox" checked id="dangerZoneToggle">
                             <span class="slider round"></span>
                         </label>
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
                         <span>Compartir ubicación en emergencias</span>
                         <label class="switch">
-                            <input type="checkbox" checked>
+                            <input type="checkbox" checked id="shareLocationToggle">
                             <span class="slider round"></span>
                         </label>
                     </div>
                     <div style="display: flex; justify-content: space-between;">
                         <span>Modo nocturno automático</span>
                         <label class="switch">
-                            <input type="checkbox">
+                            <input type="checkbox" id="nightModeToggle">
                             <span class="slider round"></span>
                         </label>
                     </div>
                 </div>
             </div>
             
-            <button onclick="logout()" style="width: 100%; padding: 1rem; background: #f0f0f0; color: #ff4444; border: none; border-radius: 10px; margin-top: 1rem;">Cerrar Sesión</button>
+            <button id="logoutBtn2" style="width: 100%; padding: 1rem; background: #f0f0f0; color: #ff4444; border: none; border-radius: 10px; margin-top: 1rem;">Cerrar Sesión</button>
         </div>
     </div>
     
@@ -690,19 +742,19 @@
     
     <!-- Barra de navegación -->
     <div class="nav-bar">
-        <a href="#" class="nav-item active" onclick="showPage('homePage')">
+        <a href="#" class="nav-item active" id="navHome">
             <div class="nav-icon">🏠</div>
             <div>Inicio</div>
         </a>
-        <a href="#" class="nav-item" onclick="showPage('chatPage')">
+        <a href="#" class="nav-item" id="navChat">
             <div class="nav-icon">💬</div>
             <div>Chat</div>
         </a>
-        <a href="#" class="nav-item" onclick="showPage('reportsPage')">
+        <a href="#" class="nav-item" id="navReports">
             <div class="nav-icon">📝</div>
             <div>Reportes</div>
         </a>
-        <a href="#" class="nav-item" onclick="showPage('profilePage')">
+        <a href="#" class="nav-item" id="navProfile">
             <div class="nav-icon">👤</div>
             <div>Perfil</div>
         </a>
@@ -755,10 +807,8 @@
         // Inicializar la aplicación cuando el DOM esté listo
         document.addEventListener('DOMContentLoaded', function() {
             initMap();
-            setupPanicButton();
+            setupEventListeners();
             loadReports();
-            setupEmergencyGestures();
-            startVoiceRecognition();
             
             // Mostrar instrucciones de gestos al inicio
             setTimeout(() => {
@@ -834,7 +884,7 @@
             setInterval(() => {
                 if (userMarker) {
                     const userPos = userMarker.getLatLng();
-                    if (dangerZone.getBounds().contains(userPos) {
+                    if (dangerZone.getBounds().contains(userPos)) {
                         if (!isInDangerZone) {
                             showDangerZoneWarning();
                             isInDangerZone = true;
@@ -888,46 +938,30 @@
         
         function mostrarEnMapa(lugarKey) {
             const lugar = lugaresCercanos[lugarKey];
-            if (lugar) {
+            if (lugar && map) {
                 map.setView(lugar.coords, 18);
                 showNotification(`Mostrando ${lugar.nombre} en el mapa`, "verde");
+                return true;
             }
+            return false;
         }
         
         function seleccionarLugar(lugarKey) {
             const lugar = lugaresCercanos[lugarKey];
             if (lugar) {
-                document.getElementById('incidentLocation').value = lugar.nombre;
-                showNotification(`Lugar seleccionado: ${lugar.nombre}`, "verde");
+                const input = document.getElementById('incidentLocation');
+                if (input) {
+                    input.value = lugar.nombre;
+                    showNotification(`Lugar seleccionado: ${lugar.nombre}`, "verde");
+                    return true;
+                }
             }
+            return false;
         }
         
         // ====================
         // FUNCIONES DE EMERGENCIA
         // ====================
-        
-        function setupPanicButton() {
-            const panicButton = document.getElementById('panicButton');
-            
-            panicButton.addEventListener('click', function() {
-                if (!emergencyActive) {
-                    if (confirm("¿Estás seguro que quieres activar la alarma de emergencia?")) {
-                        activateEmergency();
-                    }
-                } else {
-                    // Desactivar emergencia
-                    emergencyActive = false;
-                    panicButton.classList.remove('active');
-                    document.body.classList.remove('emergency-mode');
-                    
-                    if (navigator.vibrate) {
-                        navigator.vibrate(0);
-                    }
-                    
-                    showNotification("Alarma desactivada", "verde");
-                }
-            });
-        }
         
         function setupEmergencyGestures() {
             // 1. Detección de movimiento (agitar)
@@ -962,60 +996,31 @@
             });
         }
         
-        function startVoiceRecognition() {
-            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.lang = 'es-ES';
-            recognition.onresult = (e) => {
-                const transcript = e.results[0][0].transcript.toLowerCase();
-                if (transcript.includes('ayuda ueb') || transcript.includes('emergencia')) {
-                    activateEmergency(true);
-                }
-            };
-            
-            recognition.onerror = (e) => {
-                console.log("Error en reconocimiento de voz:", e.error);
-            };
-            
-            try {
-                recognition.start();
-                setTimeout(startVoiceRecognition, 5000); // Reiniciar cada 5 segundos
-            } catch (e) {
-                console.log("Error al iniciar reconocimiento de voz:", e);
-            }
-        }
-        
         function activateEmergency(silent = false) {
             if (emergencyActive) return;
             
             emergencyActive = true;
+            const panicButton = document.getElementById('panicButton');
+            panicButton.classList.add('active');
             document.body.classList.add('emergency-mode');
             
             // Obtener ubicación actual
             const userLocation = userMarker.getLatLng();
             
-            // Enviar alerta a seguridad
-            sendEmergencyAlert(userLocation, silent);
-            
-            // Mostrar feedback al usuario
+            // Feedback al usuario
             if (!silent) {
-                document.getElementById('panicButton').classList.add('active');
                 navigator.vibrate([500, 200, 500]);
                 showNotification("¡ALERTA ENVIADA A SEGURIDAD!", "rojo");
             } else {
-                showNotification("Alerta silenciosa activada", "verde");
                 navigator.vibrate([200, 100, 200]);
+                showNotification("Alerta silenciosa activada", "verde");
             }
             
-            // Registrar en el historial
-            addEmergencyReport(userLocation);
+            // Enviar alerta (simulación)
+            sendEmergencyAlert(userLocation, silent);
             
-            // Mostrar en el chat
-            addMessage(
-                "Sistema", 
-                silent ? "Alerta silenciosa activada" : "¡EMERGENCIA ACTIVADA!", 
-                "received", 
-                "chatMessages"
-            );
+            // Registrar en historial
+            addEmergencyReport(userLocation, silent);
         }
         
         function sendEmergencyAlert(location, isSilent) {
@@ -1044,12 +1049,12 @@
             }, 3000);
         }
         
-        function addEmergencyReport(location) {
+        function addEmergencyReport(location, silent) {
             const newReport = {
                 id: reports.length + 1,
                 type: "emergencia",
                 location: `Ubicación: ${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`,
-                description: emergencyActive ? "Botón de pánico activado" : "Alerta silenciosa activada",
+                description: silent ? "Alerta silenciosa activada" : "Botón de pánico activado",
                 date: new Date().toLocaleString(),
                 status: "en_revision"
             };
@@ -1084,12 +1089,6 @@
             }
         }
         
-        function handleKeyPress(event) {
-            if (event.key === "Enter") {
-                sendMessage();
-            }
-        }
-        
         function addMessage(sender, text, type, containerId) {
             const chat = document.getElementById(containerId);
             const now = new Date();
@@ -1111,13 +1110,13 @@
         // ====================
         
         function submitReport() {
-            const type = document.getElementById('incidentType').value;
-            const location = document.getElementById('incidentLocation').value;
-            const description = document.getElementById('incidentDescription').value;
+            const type = document.getElementById('incidentType')?.value;
+            const location = document.getElementById('incidentLocation')?.value;
+            const description = document.getElementById('incidentDescription')?.value;
             
             if (!type || !location || !description) {
                 alert("Por favor completa todos los campos");
-                return;
+                return false;
             }
             
             const newReport = {
@@ -1139,6 +1138,8 @@
             
             showNotification("Reporte enviado con éxito", "verde");
             addMessage("Sistema", `Nuevo reporte en ${location}: ${description}`, "received", "chatMessages");
+            
+            return true;
         }
         
         function loadReports() {
@@ -1211,22 +1212,28 @@
         // ====================
         
         function showPage(pageId) {
+            // Ocultar todas las páginas
             document.querySelectorAll('.page').forEach(page => {
                 page.classList.remove('active');
             });
+            
+            // Mostrar la página solicitada
             document.getElementById(pageId).classList.add('active');
             
+            // Actualizar navegación activa
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
             });
             
-            // Marcar el ítem de navegación correspondiente como activo
-            document.querySelector(`.nav-item[onclick="showPage('${pageId}')"]`).classList.add('active');
+            // Marcar el ítem de navegación correspondiente
+            const activeNav = document.querySelector(`.nav-item[onclick*="${pageId}"]`);
+            if (activeNav) activeNav.classList.add('active');
             
-            // Ajustar mapa si es la página de inicio
+            // Ajustar mapa si es necesario
             if (pageId === 'homePage' && map) {
                 setTimeout(() => {
                     map.invalidateSize();
+                    if (userMarker) map.panTo(userMarker.getLatLng());
                 }, 300);
             }
         }
@@ -1327,6 +1334,70 @@
                     );
                 }
             }, 2000);
+        }
+        
+        // ====================
+        // CONFIGURACIÓN DE EVENTOS
+        // ====================
+        
+        function setupEventListeners() {
+            // Botón de pánico
+            document.getElementById('panicButton').addEventListener('click', function() {
+                if (!emergencyActive) {
+                    if (confirm("¿Estás seguro que quieres activar la alarma de emergencia?")) {
+                        activateEmergency();
+                    }
+                } else {
+                    // Desactivar emergencia
+                    emergencyActive = false;
+                    this.classList.remove('active');
+                    document.body.classList.remove('emergency-mode');
+                    showNotification("Alarma desactivada", "verde");
+                }
+            });
+            
+            // Navegación
+            document.getElementById('navHome').addEventListener('click', (e) => {
+                e.preventDefault();
+                showPage('homePage');
+            });
+            
+            document.getElementById('navChat').addEventListener('click', (e) => {
+                e.preventDefault();
+                showPage('chatPage');
+            });
+            
+            document.getElementById('navReports').addEventListener('click', (e) => {
+                e.preventDefault();
+                showPage('reportsPage');
+            });
+            
+            document.getElementById('navProfile').addEventListener('click', (e) => {
+                e.preventDefault();
+                showPage('profilePage');
+            });
+            
+            // Botones de acción rápida
+            document.getElementById('acompanamientoBtn').addEventListener('click', solicitarAcompanamiento);
+            document.getElementById('firstAidBtn').addEventListener('click', () => showPage('firstAidPage'));
+            document.getElementById('chatBtn').addEventListener('click', () => showPage('chatPage'));
+            document.getElementById('reportsBtn').addEventListener('click', () => showPage('reportsPage'));
+            
+            // Chat
+            document.getElementById('sendMessageBtn').addEventListener('click', sendMessage);
+            document.getElementById('messageInput').addEventListener('keypress', (e) => {
+                if (e.key === "Enter") sendMessage();
+            });
+            
+            // Reportes
+            document.getElementById('submitReportBtn').addEventListener('click', submitReport);
+            
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('logoutBtn2').addEventListener('click', logout);
+            
+            // Configuración de emergencia
+            setupEmergencyGestures();
         }
     </script>
 </body>

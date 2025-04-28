@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UniSegura e</title>
+    <title>UniSegura - Universidad El Bosque</title>
     <style>
         :root {
             --verde-bosque: #2E8B57;
@@ -322,8 +322,11 @@
                 // Ocultar mensaje de error si estaba visible
                 document.getElementById('errorMessage').style.display = 'none';
                 
-                // Iniciar verificación biométrica
-                verificarIdentidad();
+                // Redirigir directamente para pruebas (en producción usar verificación biométrica)
+                window.location.href = "app.html";
+                
+                // En producción descomentar esto:
+                // verificarIdentidad();
             } else {
                 // Mostrar error
                 document.getElementById('errorMessage').style.display = 'block';
